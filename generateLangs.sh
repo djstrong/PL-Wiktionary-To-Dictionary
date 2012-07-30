@@ -7,4 +7,3 @@ python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "esperan
 python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "jidysz" > yiddish_polish.txt
 python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język szwedzki" > swedish_polish.txt
 python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język włoski" > italian_polish.txt
-python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "znak chiński" > han_polish.txt

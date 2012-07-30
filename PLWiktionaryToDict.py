@@ -32,6 +32,7 @@ either expressed or implied, of the FreeBSD Project.
 
 import sys
 import re
+import locale
 
 class Entry:
     """Represents one translation of some entry.
@@ -65,7 +66,7 @@ class Entry:
             t += self.forms
             
         if not t:
-            raise ValueError("no meanings")
+            raise ValueError("no meanings - __normalize_meanings")
             
         #TODO: POS
         m = re.findall(': ?\([0-9.]+\) ?(.*)', t)
@@ -86,7 +87,7 @@ class Entry:
             #refs
             meaning = re.sub("&lt;ref( name=(&quot;)?.*?(&quot;)?)?&gt;.*?&lt;/ref&gt;", '', meaning)
             meaning = re.sub("&lt;ref( name=(&quot;)?.*?(&quot;)?)?/&gt;", '', meaning)
-            
+
             #odmiany
             meaning = re.sub('[^( ]+\|([^) ]+)', '\\1', meaning)
             
@@ -95,19 +96,21 @@ class Entry:
             
             #puste nawiasy
             meaning = re.sub('\( *\)', '', meaning)
-            
+
             #spacje z przecinkami
             meaning = re.sub(' *, *', ', ', meaning)
             meaning = re.sub('\( +', '(', meaning)
             meaning = re.sub(' +\)', ')', meaning)
-            
+
             meaning = meaning.strip(' ,')
+
             if meaning:
                 self.meanings.append(meaning)
-            else:
-                raise ValueError('no meanings')
+        
+        if not self.meanings:
+            raise ValueError('no meanings - __normalize_meanings2')
 
-    def __parse_forms(self, entry): #TODO: sang is not parsed
+    def __parse_forms(self, entry): #TODO: sang is not parsed - forma czasownika/rzeczownika
         """Parses forms of entry.
         
         Args:
@@ -200,7 +203,7 @@ class Page:
         for entry in entries:
             try:
                 e = Entry(entry)
-            except ValueError as e:
+            except ValueError as err:
                 continue
             self.entries.append(e)
     
@@ -265,7 +268,7 @@ class PLWiktionaryToDictionary:
         dictionary: A list of entries.
     """
     
-    _WIKI_LANGUAGES = set("nagłówek języka,termin obcy w języku polskim,termin obcy w języku łacińskim,dżuhuri,esperanto,ewe,hindi,ido,interlingua,inuktitut,język kaszmirski,język marathi,język newarski,język sorani,język zazaki,ladino,lingala,novial,papiamento,pitjantjatjara,sanskryt,slovio,sranan tongo,tetum,tok pisin,tupinambá,użycie międzynarodowe,volapük,znak chiński,brithenig,esperanto (morfem),jidysz,jèrriais,język !Xóõ,język abazyński,język abchaski,język abenaki,język adygejski,język afar,język afrykanerski,język ajmara,język akadyjski,język aklanon,język alabama,język albański,język alemański,język aleucki,język amharski,język angielski,język arabski,język aragoński,język aramejski,język arapaho,język arczyński,język arumuński,język assamski,język asturyjski,język awarski,język azerski,język bambara,język banjumasański,język baskijski,język baszkirski,język bawarski,język beludżi,język bengalski,język białoruski,język białoruski (taraszkiewica),język birmański,język bislama,język boloński,język bośniacki,język bretoński,język bugijski,język bułgarski,język cebuano,język chakaski,język chantyjski (kazymski),język chantyjski (surgucki),język chantyjski (szuryszkarski),język chantyjski (wachowski),język chickasaw,język chiński standardowy,język chorwacki,język czagatajski,język czamorro,język czarnogórski,język czeczeński,język czeski,język czirokeski,język czuwaski,język dalmatyński,język dari,język dolnoniemiecki,język dolnołużycki,język duński,język dzongkha,język erzja,język estoński,język etruski,język farerski,język fenicki,język fidżyjski,język filipino,język fiński,język francuski,język friulski,język fryzyjski,język fryzyjski saterlandzki,język ful,język ga,język gagauski,język galicyjski,język gaskoński,język gocki,język grenlandzki,język gruziński,język guarani,język gudźarati,język gyyz,język górnołużycki,język haitański,język hausa,język hawajski,język hebrajski,język hiligaynon,język hiszpański,język holenderski,język hupa,język ilokano,język indonezyjski,język inguski,język irlandzki,język islandzki,język istriocki,język japoński,język jawajski,język jaćwieski,język joruba,język kabylski,język kakczikel,język kannada,język karaczajsko-bałkarski,język karakałpacki,język kaszubski,język kataloński,język kazachski,język kałmucki,język keczua,język khmerski,język kirgiski,język klingoński,język komi,język komi-jaźwiński,język komi-permiacki,język komi-zyriański,język konkani,język koptyjski,język koreański,język kornijski,język korsykański,język kri,język krymskotatarski,język kumycki,język kurdyjski,język kurmandżi,język ladyński,język langwedocki,język laotański,język lezgiński,język liguryjski,język limburski,język litewski,język lombardzki,język luksemburski,język luo,język macedoński,język malajalam,język malajski,język malediwski,język malgaski,język maltański,język manx,język maoryski,język maryjski,język mazanderański,język mikmak,język minnan,język mongolski,język motu,język mołdawski,język nahuatl,język nauruański,język nawaho,język neapolitański,język neo,język nepalski,język niemiecki,język normandzki,język norweski (bokmål),język norweski (bokmål),język norweski (nynorsk),język nowogrecki,język orija,język ormiański,język oromo,język osetyjski,język osmańsko-turecki,język pali,język paszto,język pendżabski,język pensylwański,język perski,język piemoncki,język pikardyjski,język pirahã,język plautdietsch,język polski,język portugalski,język połabski,język pragermański,język prowansalski,język pruski,język północnofryzyjski,język północnolapoński,język rarotonga,język romansz,język romski,język rosyjski,język rumuński,język rundi,język rusiński,język russenorsk,język sardyński,język serbski,język serbsko-chorwacki,język shelta,język shona,język sindhi,język sko,język skolt,język somalijski,język staro-cerkiewno-słowiański,język staro-wysoko-niemiecki,język staroangielski,język staroegipski,język starofrancuski,język starogrecki,język staroirlandzki,język staronordyjski,język staroormiański,język suahili,język sumeryjski,język sundajski,język susu,język sycylijski,język syngaleski,język szerpa,język szkocki,język szkocki gaelicki,język szorski,język szwabski,język szwedzki,język słowacki,język słoweński,język słowiński,język tabasarański,język tadżycki,język tagalski,język tahitański,język tajski,język tamaszek,język tamazight,język tamilski,język tashelhiyt,język tatarski,język telugu,język tigrinia,język tonga,język turecki,język turkmeński,język tuvalu,język tuwiński,język twi,język tybetański,język udmurcki,język ujgurski,język ukraiński,język urdu,język uwea,język uzbecki,język võro,język walijski,język waloński,język warajski,język wczesny nowoangielski,język wenecki,język wepski,język wietnamski,język wilamowski,język wolof,język wysokoislandzki,język węgierski,język włoski,język xhosa,język yupik środkowy,język zachodnioflamandzki,język zarfatit,język zelandzki,język zulu,język łaciński,język łatgalski,język łotewski,język średnio-dolno-niemiecki,język średnio-wysoko-niemiecki,język średnioangielski,język żmudzki,Lingua Franca Nova,quenya,romániço,wenedyk".split(','))
+    _WIKI_LANGUAGES = set("nagłówek języka,termin obcy w języku polskim,termin obcy w języku łacińskim,dżuhuri,esperanto,ewe,hindi,ido,interlingua,inuktitut,język kaszmirski,język marathi,język newarski,język sorani,język zazaki,ladino,lingala,novial,papiamento,pitjantjatjara,sanskryt,slovio,sranan tongo,tetum,tok pisin,tupinambá,użycie międzynarodowe,volapük,znak chiński,brithenig,esperanto (morfem),jidysz,jèrriais,język !Xóõ,język a-pucikwar,język abazyński,język abchaski,język abenaki,język adygejski,język afar,język afrykanerski,język ajmara,język akadyjski,język aklanon,język alabama,język albański,język alemański,język aleucki,język ama,język amharski,język angielski,język arabski,język aragoński,język aramejski,język arapaho,język arczyński,język arumuński,język assamski,język asturyjski,język awarski,język azerski,język bambara,język banjumasański,język baskijski,język baszkirski,język bawarski,język beludżi,język bengalski,język białoruski,język białoruski (taraszkiewica),język birmański,język bislama,język boloński,język bośniacki,język bretoński,język bugijski,język bułgarski,język cebuano,język chakaski,język chantyjski (kazymski),język chantyjski (surgucki),język chantyjski (szuryszkarski),język chantyjski (wachowski),język chickasaw,język chiński standardowy,język chorwacki,język czagatajski,język czamorro,język czarnogórski,język czeczeński,język czeski,język czirokeski,język czuwaski,język dalmatyński,język dari,język dolnoniemiecki,język dolnołużycki,język duński,język dzongkha,język erzja,język estoński,język etruski,język farerski,język fenicki,język fidżyjski,język filipino,język fiński,język francuski,język friulski,język fryzyjski,język fryzyjski saterlandzki,język ful,język ga,język gagauski,język galicyjski,język gaskoński,język gocki,język grenlandzki,język gruziński,język guarani,język gudźarati,język gyyz,język górnołużycki,język haitański,język hausa,język hawajski,język hebrajski,język hiligaynon,język hiszpański,język holenderski,język hupa,język ilokano,język indonezyjski,język inguski,język irlandzki,język islandzki,język istriocki,język jakucki,język japoński,język jawajski,język jaćwieski,język joruba,język kabylski,język kakczikel,język kannada,język karaczajsko-bałkarski,język karakałpacki,język karelski,język kaszubski,język kataloński,język kazachski,język kałmucki,język keczua,język khmerski,język kirgiski,język klingoński,język komi,język komi-jaźwiński,język komi-permiacki,język komi-zyriański,język konkani,język koptyjski,język koreański,język kornijski,język korsykański,język kri,język krymskotatarski,język kumycki,język kurdyjski,język kurmandżi,język ladyński,język langwedocki,język laotański,język lazyjski,język lezgiński,język liguryjski,język limburski,język litewski,język lombardzki,język luksemburski,język luo,język macedoński,język malajalam,język malajski,język malediwski,język malgaski,język maltański,język manx,język maoryski,język maryjski,język mazanderański,język mikmak,język minnan,język moksza,język mongolski,język motu,język mołdawski,język nahuatl,język nauruański,język nawaho,język neapolitański,język neo,język nepalski,język niemiecki,język normandzki,język norweski (bokmål),język norweski (nynorsk),język nowogrecki,język orija,język ormiański,język oromo,język osetyjski,język osmańsko-turecki,język pali,język paszto,język pendżabski,język pensylwański,język perski,język piemoncki,język pikardyjski,język pirahã,język plautdietsch,język polski,język portugalski,język połabski,język pragermański,język prowansalski,język pruski,język północnofryzyjski,język północnolapoński,język rarotonga,język romansz,język romski,język rosyjski,język rumuński,język rundi,język rusiński,język russenorsk,język sardyński,język serbski,język serbsko-chorwacki,język shelta,język shona,język sindhi,język sko,język skolt,język somalijski,język staro-cerkiewno-słowiański,język staro-wysoko-niemiecki,język staroangielski,język staroegipski,język starofrancuski,język starogrecki,język staroirlandzki,język staronordyjski,język staroormiański,język staroruski,język suahili,język sumeryjski,język sundajski,język susu,język sycylijski,język syngaleski,język szerpa,język szkocki,język szkocki gaelicki,język szorski,język szwabski,język szwedzki,język słowacki,język słoweński,język słowiński,język tabasarański,język tadżycki,język tagalski,język tahitański,język tajski,język tamaszek,język tamazight,język tamilski,język tashelhiyt,język tatarski,język telugu,język tigrinia,język tonga,język turecki,język turkmeński,język tuvalu,język tuwiński,język twi,język tybetański,język udmurcki,język ujgurski,język ukraiński,język urdu,język uwea,język uzbecki,język võro,język walijski,język waloński,język warajski,język wczesny nowoangielski,język wenecki,język wepski,język wietnamski,język wilamowski,język wolof,język wysokoislandzki,język węgierski,język włoski,język xhosa,język yupik środkowy,język zachodnioflamandzki,język zarfatit,język zelandzki,język zulu,język łaciński,język łatgalski,język łotewski,język średnio-dolno-niemiecki,język średnio-wysoko-niemiecki,język średnioangielski,język żmudzki,Lingua Franca Nova,quenya,romániço,wenedyk".split(','))
     
     def __init__(self, path, language='język angielski'):
         """Opens wiktionary dump and sets language of dictionary.
@@ -277,6 +280,8 @@ class PLWiktionaryToDictionary:
         self.f = open(path, 'r')
         self.dictionary = []
         self.language = language
+        if language not in self._WIKI_LANGUAGES:
+            print >> sys.stderr, 'unknown language in argument: ' + language
     
     def __iter__(self):
         return self.__entries()
@@ -316,7 +321,14 @@ class PLWiktionaryToDictionary:
         self.f.close()
 
 if __name__ == '__main__':
+    locale.setlocale(locale.LC_ALL,"")
+    
     path = sys.argv[1]
-    w = PLWiktionaryToDictionary(path)
-    for e in w:
+    if len(sys.argv)==3:
+        lang = sys.argv[2]
+        w = PLWiktionaryToDictionary(path, language=lang)
+    else:
+        w = PLWiktionaryToDictionary(path)
+    #w = PLWiktionaryToDictionary('plwiktionary-20120718-pages-meta-current.xml2')
+    for e in sorted(w, key=lambda x: x.word, cmp=locale.strcoll):
         print '%s - %s' % (e.word, '; '.join(e.meanings))
