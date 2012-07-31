@@ -7,3 +7,8 @@ python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "esperan
 python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "jidysz" > yiddish_polish.txt
 python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język szwedzki" > swedish_polish.txt
 python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język włoski" > italian_polish.txt
+python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język czeski" > czech_polish.txt
+python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język arabski" > arabic_polish.txt
+python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język łaciński" > latin_polish.txt
+python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język nowogrecki" > modern_greek_polish.txt
+python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język rosyjski" > russian_polish.txt
