@@ -5,15 +5,15 @@ Parses Polish wiktionary and creates simple dictionary of foreign language (e.g.
 
 Run:
 =====
-python PLWiktionaryToDict.py <path to Polish wiktionary dump> [language]
-Default value of language is 'język angielski' - English.
-e.g. python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język niemiecki" > german_polish.txt
+```python PLWiktionaryToDict.py <path to Polish wiktionary dump> [language]```  
+Default value of language is 'język angielski' - English.  
+e.g. ```python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język niemiecki" > german_polish.txt```
 
 Last version of wiktionary dump can be downloaded from http://dumps.wikimedia.org/plwiktionary/latest/plwiktionary-latest-pages-meta-current.xml.bz2.
 
 Dictionaries:
 =====
-In download section are some dictionaries from 20120728 dump:
+In download section are some dictionaries (in UTF-8) from 20120728 dump:
 * German to Polish dictionary (14k) - https://github.com/downloads/djstrong/PL-Wiktionary-To-Dictionary/german_polish.txt
 * Yiddish to Polish dictionary (7k) - https://github.com/downloads/djstrong/PL-Wiktionary-To-Dictionary/yiddish_polish.txt
 * Spanish to Polish dictionary (10k) - https://github.com/downloads/djstrong/PL-Wiktionary-To-Dictionary/spanish_polish.txt
