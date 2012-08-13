@@ -1,13 +1,13 @@
 PL-Wiktionary-To-Dictionary
 ===========================
 
-Parses Polish wiktionary and creates simple dictionary of foreign language (e.g. English) to Polish.
+Parses Polish wiktionary and creates simple dictionaries of foreign languages (e.g. English) to Polish and vice versa.
 
 Run:
 =====
-```python PLWiktionaryToDict.py <path to Polish wiktionary dump> [language]```  
-Default value of language is 'język angielski' - English.  
-e.g. ```python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml "język niemiecki" > german_polish.txt```
+```python PLWiktionaryToDict.py <path to Polish wiktionary dump>```  
+Main code is saving defined languages creating dictionary files form Polish and to Polish.
+e.g. ```python PLWiktionaryToDict.py plwiktionary-latest-pages-meta-current.xml```
 
 Last version of wiktionary dump can be downloaded from http://dumps.wikimedia.org/plwiktionary/latest/plwiktionary-latest-pages-meta-current.xml.bz2.
 
