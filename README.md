@@ -46,3 +46,5 @@ From Polish:
 * Polish to French dictionary (8k) - https://raw.github.com/djstrong/PL-Wiktionary-To-Dictionary/master/dictionaries/polish_french.txt
 * Polish to English dictionary (14k) - https://raw.github.com/djstrong/PL-Wiktionary-To-Dictionary/master/dictionaries/polish_english.txt
 * Polish to Interlingua dictionary (2k) - https://raw.github.com/djstrong/PL-Wiktionary-To-Dictionary/master/dictionaries/polish_interlingua.txt
+ 
+License: http://creativecommons.org/licenses/by-sa/3.0/deed
