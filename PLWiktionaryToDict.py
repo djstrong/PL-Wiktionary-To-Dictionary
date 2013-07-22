@@ -35,6 +35,29 @@ import re
 import locale
 import collections
 
+def sup(m):
+    t = {'0':u'⁰', '1':u'¹', '2':u'²', '3':u'³', '4':u'⁴', '5':u'⁵', '6':u'⁶', '7':u'⁷', 
+         '8':u'⁸', 
+         '9':u'⁹', '+':u'⁺', '-':u'⁻', 'e':u'ᵉ', 'r':'ʳ' }
+    n = ''
+    for l in m.group(1):
+        if l in t:
+            n += t[l]
+        else:
+            n += l
+    return n
+
+def sub(m):
+    t = {'0':u'₀', '1':u'₁', '2':u'₂', '3':u'₃', '4':u'₄', '5':u'₅', '6':u'₆', '7':u'₇', 
+         '8':u'₈', 
+         '9':u'₉'}
+    n = ''
+    for l in m.group(1):
+        if l in t:
+            n += t[l]
+        else:
+            n += l
+    return n
 
 class EntryDefault:
     """Represents one translation of some entry.
@@ -53,7 +76,7 @@ class EntryDefault:
             entry: A string of raw entry.
         """
         
-        #print entry,'\n\n\n'
+        # print entry,'\n\n\n'
         
         self._parse_word_and_language(entry)
         
@@ -62,7 +85,7 @@ class EntryDefault:
             self._normalize_translations()
         else:
             self._parse_meanings(entry)
-            #print 'M', self.meanings, self.word
+            # print 'M', self.meanings, self.word
             self._parse_forms(entry)
            # if self.forms: print 'F', self.forms, self.word
             self._normalize_meanings()
@@ -72,31 +95,36 @@ class EntryDefault:
         w = w2 = w3 = w4 = False
         last = 0
         for i in xrange(len(text)):
-            #print text[i]
-            if not w and not w2 and not w3 and not w4 and text[i:i+2] in (', ', '; '):
-                #print 'apend'
+            # print text[i]
+            if not w and not w2 and not w3 and not w4 and text[i:i + 2] in (', ', '; '):
+                # print 'apend'
                 slowa.append(text[last:i])
-                last=i+2
+                last = i + 2
             else:
-                #print text[i:i+2], text[i:i+2]=='[[', text[i:i+2]==']]', w
-                if text[i:i+2]=='[[':
+                # print text[i:i+2], text[i:i+2]=='[[', text[i:i+2]==']]', w
+                if text[i:i + 2] == '[[':
                     w = True
-                elif text[i:i+2]==']]':
+                elif text[i:i + 2] == ']]':
                     w = False
-                elif text[i:i+2]=='{{':
+                elif text[i:i + 2] == '{{':
                     w2 = True
-                elif text[i:i+2]=='}}':
+                elif text[i:i + 2] == '}}':
                     w2 = False
-                elif text[i]=='(':
+                elif text[i] == '(':
                     w3 = True
-                elif text[i]==')':
+                elif text[i] == ')':
                     w3 = False
-                elif text[i:i+2]=="''":
+                elif text[i:i + 2] == "''":
                     w4 = not w4
 
-        if last+1<len(text):
+        if last + 1 < len(text):
             slowa.append(text[last:])
         return slowa
+
+    def supSubUnicode(self, s):
+        s = re.sub('\<sup>(.*?)</sup>', sup, s)
+        s = re.sub('\<sub>(.*?)</sub>', sub, s)
+        return s
 
     def _normalize_meanings(self):
         """Clears wiki formatting to plain text.
@@ -120,15 +148,15 @@ class EntryDefault:
             meaning = re.sub('<ref( name=(")?.*?(")?)?>.*?</ref>', '', meaning)
             meaning = re.sub('<ref( name=(")?.*?(")?)?/>', '', meaning)
 
-            meaning=meaning.strip()
+            meaning = meaning.strip()
             slowa = self.rozdziel(meaning)
             
             for slowo in slowa:
                 
-                slowo = re.sub("\[\[(.*?)\]\]", lambda x: x.group(1)[x.group(1).index('|')+1:] if '|' in x.group(1) else x.group(1), slowo)
+                slowo = re.sub("\[\[(.*?)\]\]", lambda x: x.group(1)[x.group(1).index('|') + 1:] if '|' in x.group(1) else x.group(1), slowo)
                 slowo = re.sub("''(.*?)''", '', slowo)
                 
-                slowo = re.sub('{{(.{2,}?)}}', lambda x: '' if len(x.group(1).split('|'))==1 else x.group(1).split('|')[1], slowo)
+                slowo = re.sub('{{(.{2,}?)}}', lambda x: '' if len(x.group(1).split('|')) == 1 else x.group(1).split('|')[1], slowo)
                 slowo = re.sub('{{(.{2,}?)}}', '', slowo)
                 slowo = re.sub('{{([mnfw])}}', '\\1', slowo)
                 slowo = re.sub('{{.}}', '', slowo)
@@ -137,19 +165,27 @@ class EntryDefault:
                 slowo = re.sub('\( *\)', '', slowo)
                 
                 index = slowo.rfind('→')
-                if index!=-1:
-                    slowo=slowo[index+1:]
-                    #print 'SLOWO:', slowo, 'WORD:', self.word, 'SLOWA:', ' | '.join(slowa)
+                if index != -1:
+                    slowo = slowo[index + 1:]
+                    # print 'SLOWO:', slowo, 'WORD:', self.word, 'SLOWA:', ' | '.join(slowa)
                 
                 slowo = re.sub(' {2,}', ' ', slowo)
+                slowo = re.sub('\':(.*)', '\\1', slowo)
                 
-                slowo=slowo.strip()
+                slowo = self.supSubUnicode(slowo)
+                
+                slowo = slowo.strip()
+                
+                slowo = slowo.strip('/: ')
+                
+                
+                
                 if '→' in slowo:
                     print >> sys.stderr, 'SLOWO:', slowo, 'WORD:', self.word, 'SLOWA:', ' | '.join(slowa)
-                #print 'S', slowo, meaning
+                # print 'S', slowo, meaning
                 
                 if slowo:
-                    #print slowo
+                    # print slowo
                     self.meanings.append(slowo)
                 
 #             print meaning
@@ -234,9 +270,14 @@ class EntryDefault:
             self.word = m.group(1).strip()
             self.word = re.sub("\[\[(.*?)\]\]", '\\1', self.word) 
             self.word = re.sub('[^( ]+\|([^) ]+)', '\\1', self.word)
+
             # print entry, self.word TODO rodzaj
             self.language = m.group(2).strip()
             # print self.language
+            if self.language in (u'język koreański', u'język japoński', u'znak chiński', u'język chiński standardowy'):
+                self.word=self.word.strip(u'}}}')
+                self.word=self.word.replace('}}', '')
+            
             
             m2 = re.search("''rzeczownik, rodzaj (.*?)''", entry)
             if m2 is not None:
@@ -258,7 +299,7 @@ class EntryPolish (EntryDefault):
         
         self._parse_translations(entry)
         
-        #print self.word, m.group(0), self.translations
+        # print self.word, m.group(0), self.translations
         self._normalize_translations()
         
 
@@ -282,61 +323,61 @@ class EntryPolish (EntryDefault):
             self.zobtlum = []
             for x in m1:
                 self.zobtlum.extend(x.split('|'))
-            #print map(lambda x: x.split('|'), m1)
-            #print m1, self.word
-            #print self.zobtlum
+            # print map(lambda x: x.split('|'), m1)
+            # print m1, self.word
+            # print self.zobtlum
         m = re.findall('\* ([^:]+): (.*)', t)
         
-        #if u'zobtłum' in t:
+        # if u'zobtłum' in t:
         #    print 'XXXX',t
-            #print m
+            # print m
         if not m and 'zobtłum' not in t:
             print >> sys.stderr, '_normalize_translations(): probably lack of space in translations: ' + self.word
             
         self.translations = []
         for lang, translation in m:
-            #TODO poprawic dzielenie znaczen
+            # TODO poprawic dzielenie znaczen
             # [[word]] -> word
-            #print 'T', translation, lang, self.word
-            if (lang==u'polski język migowy'): continue
+            # print 'T', translation, lang, self.word
+            if (lang == u'polski język migowy'): continue
             
-            #m2 = re.findall('\([0-9]+(?:\.[0-9]+)*(?:[,-] ?[0-9]+(?:\.[0-9]+)*)*\).+?(?:\([0-9]+(?:\.[0-9]+)*(?:[,-] ?[0-9]+(?:\.[0-9]+)*)*\))?', translation)
-            #m2=re.findall('[0-9]+\.(?:(?![0-9]+\.).)*', translation)
-            #print m2
+            # m2 = re.findall('\([0-9]+(?:\.[0-9]+)*(?:[,-] ?[0-9]+(?:\.[0-9]+)*)*\).+?(?:\([0-9]+(?:\.[0-9]+)*(?:[,-] ?[0-9]+(?:\.[0-9]+)*)*\))?', translation)
+            # m2=re.findall('[0-9]+\.(?:(?![0-9]+\.).)*', translation)
+            # print m2
             translations = []
             for meaning in translation.split(';'):
-                meaning=meaning.strip()
-                #numery i transliteracje
+                meaning = meaning.strip()
+                # numery i transliteracje
                 meaning = re.sub('\([0-9]+.*?\)', '', meaning)
                 
-                #m2 = re.search('{{(.)}}', meaning)
-                #if m2: 
+                # m2 = re.search('{{(.)}}', meaning)
+                # if m2: 
                 #    print m2.group(0)
                 #    print 'M', meaning, self.word
                 
-                #zostawiamy rodzajniki
-                #meaning = re.sub('{{(.)}}', '\\1', meaning)
-                #wyrzucamy skroty
-                #meaning = re.sub('{{(.*?)}}', '', meaning)
+                # zostawiamy rodzajniki
+                # meaning = re.sub('{{(.)}}', '\\1', meaning)
+                # wyrzucamy skroty
+                # meaning = re.sub('{{(.*?)}}', '', meaning)
                 
                 # refs
                 meaning = re.sub('<ref( name=(")?.*?(")?)?>.*?</ref>', '', meaning)
                 meaning = re.sub('<ref( name=(")?.*?(")?)?/>', '', meaning)
 
-                meaning=meaning.strip()
+                meaning = meaning.strip()
 
-                #ll = [u'angielski', u'niemiecki', u'francuski', u'hiszpański', u'włoski', u'rosyjski', u'czeski', u'słowacki', u'ukraiński', u'holenderski',
+                # ll = [u'angielski', u'niemiecki', u'francuski', u'hiszpański', u'włoski', u'rosyjski', u'czeski', u'słowacki', u'ukraiński', u'holenderski',
                 # u'turecki', u'duński', u'bułgarski', u'portugalski', u'chorwacki', u'fiński', u'norweski', u'litewski', u'łotewski', u'estoński'
                 # , u'szwedzki', u'łaciński', u'nowogrecki', u'arabski', u'esperanto', u'interlingua', u'jidysz', u'gruziński', u'węgierski', u'kataloński', u'japoński', u'koreański']
                 
-                #if lang!='asd':
+                # if lang!='asd':
                 slowa = self.rozdziel(meaning)
                 
                 for slowo in slowa:
-                    slowo = re.sub("\[\[(.*?)\]\]", lambda x: x.group(1)[x.group(1).index('|')+1:] if '|' in x.group(1) else x.group(1), slowo)
+                    slowo = re.sub("\[\[(.*?)\]\]", lambda x: x.group(1)[x.group(1).index('|') + 1:] if '|' in x.group(1) else x.group(1), slowo)
                     slowo = re.sub("''(.*?)''", '', slowo)
                     
-                    slowo = re.sub('{{(.{2,}?)}}', lambda x: '' if len(x.group(1).split('|'))==1 else x.group(1).split('|')[1], slowo)
+                    slowo = re.sub('{{(.{2,}?)}}', lambda x: '' if len(x.group(1).split('|')) == 1 else x.group(1).split('|')[1], slowo)
                     slowo = re.sub('{{(.{2,}?)}}', '', slowo)
                     slowo = re.sub('{{([mnfw])}}', '\\1', slowo)
                     slowo = re.sub('{{.}}', '', slowo)
@@ -345,64 +386,70 @@ class EntryPolish (EntryDefault):
                     slowo = re.sub('\( *\)', '', slowo)
                     
 
-                    #zle dzielone arabskie ,
+                    # zle dzielone arabskie ,
                     if '→' in slowo:
                         print >> sys.stderr, 'SLOWO:', slowo, 'WORD:', self.word, 'SLOWA:', ' | '.join(slowa)
                 
                     slowo = re.sub(' {2,}', ' ', slowo)
-                    slowo=slowo.strip()
+                    slowo = re.sub('\':(.*)', '\\1', slowo)
+                    
+                    
+                    slowo = self.supSubUnicode(slowo)
+                    slowo = slowo.strip()
+                
+                    slowo = slowo.strip('/: ')
                 
                     if slowo and slowo not in translations:
                         translations.append(slowo)
-                        #niedodawac jesli juz jest
+                        # niedodawac jesli juz jest
              
             self.translations.append((lang, translations))
-            #if not translations: print ' | '.join(translations), 'XXX', translation, self.word
-                    #continue
-                    #meaning = re.sub('\(.*?\)', '', meaning)
+            # if not translations: print ' | '.join(translations), 'XXX', translation, self.word
+                    # continue
+                    # meaning = re.sub('\(.*?\)', '', meaning)
                     
-                    #wyrzucamy skroty
+                    # wyrzucamy skroty
                     
                     
-                    #wyrzucamy przypisy
-                    #meaning = re.sub('{{(.{2,})}}', '', meaning)
+                    # wyrzucamy przypisy
+                    # meaning = re.sub('{{(.{2,})}}', '', meaning)
                     
-                    #meaning=meaning.strip()
+                    # meaning=meaning.strip()
                     
-                    #print 'M', meaning, lang, self.word
+                    # print 'M', meaning, lang, self.word
                     
-                    #m3 = re.search('^(\[\[[^\[\]]*?\]\]\'?\w*(?: +{{[mfwn]}})?)(?: *[,/!-]? *(\[\[[^\[\]]*?\]\]\'?\w*(?: +{{[mfwn]}})?))*$', meaning)
-                    #m3 = None
+                    # m3 = re.search('^(\[\[[^\[\]]*?\]\]\'?\w*(?: +{{[mfwn]}})?)(?: *[,/!-]? *(\[\[[^\[\]]*?\]\]\'?\w*(?: +{{[mfwn]}})?))*$', meaning)
+                    # m3 = None
                     
-                    #if not m3 : 
+                    # if not m3 : 
                     #    print 'M', meaning, lang, self.word
-                    #else:
+                    # else:
                     #    print m3.group(0), meaning
                 #
-                #if meaning and meaning[0]!='[':
+                # if meaning and meaning[0]!='[':
                     
 
-                #m2 = re.search('\([0-9]+(\.[0-9]+)*(?:[,-] ?[0-9]+(\.[0-9]+)*)*\)', meaning)
-                #if not m2:
+                # m2 = re.search('\([0-9]+(\.[0-9]+)*(?:[,-] ?[0-9]+(\.[0-9]+)*)*\)', meaning)
+                # if not m2:
                 #    print 'M', meaning, 'T', translation, lang, self.word
-                    #print m2.group(0)
+                    # print m2.group(0)
             
-            #translation = re.sub("\[\[(.*?)\]\]", '\\1', translation) 
+            # translation = re.sub("\[\[(.*?)\]\]", '\\1', translation) 
             
             # bold
             # meaning = re.sub("'''(.*?)'''", '\\1', meaning) 
             
             # rodzaj gramatyczny
-            #if lang == 'niemiecki' or lang == 'francuski':
+            # if lang == 'niemiecki' or lang == 'francuski':
             #    translation = re.sub('{{(.*?)}}', '\\1', translation)
-            #else:
+            # else:
             #    translation = re.sub('{{(.*?)}}', '', translation)
                 
             # transliteracje i numery
             
             
             # podwojne spacje
-            #translation = re.sub(' {2,}', ' ', translation)
+            # translation = re.sub(' {2,}', ' ', translation)
             
             # links
             # meaning = re.sub("''\(.*?''", '', meaning)
@@ -410,8 +457,8 @@ class EntryPolish (EntryDefault):
             # meaning = re.sub("''.*?''", '', meaning)
             
             # refs
-            #translation = re.sub("&lt;ref( name=(&quot;)?.*?(&quot;)?)?&gt;.*?&lt;/ref&gt;", '', translation)
-            #translation = re.sub("&lt;ref( name=(&quot;)?.*?(&quot;)?)?/&gt;", '', translation)
+            # translation = re.sub("&lt;ref( name=(&quot;)?.*?(&quot;)?)?&gt;.*?&lt;/ref&gt;", '', translation)
+            # translation = re.sub("&lt;ref( name=(&quot;)?.*?(&quot;)?)?/&gt;", '', translation)
 
             # odmiany
             # meaning = re.sub('[^( ]+\|([^) ]+)', '\\1', meaning)
@@ -427,9 +474,9 @@ class EntryPolish (EntryDefault):
             # meaning = re.sub('\( +', '(', meaning)
             # meaning = re.sub(' +\)', ')', meaning)
 
-            #translation = translation.strip(' ,')
+            # translation = translation.strip(' ,')
 
-            #if translations:
+            # if translations:
             #    #print translation
             #    tts = []
             #    for tt in translation.split(';'):
@@ -452,7 +499,7 @@ class EntryPolish (EntryDefault):
         Raises:
             ValueError: An error occured when no translation tag.
         """
-        #print entry
+        # print entry
         m = re.search(u'{{tłumaczenia}}(.*?)\n{{', entry, re.S)
         if m:
             self.translations = m.group(1).strip()
@@ -465,15 +512,15 @@ class Fabric:
     
     @staticmethod
     def get_entry(entry):
-        entry=entry.decode('utf-8')
+        entry = entry.decode('utf-8')
         
         import HTMLParser
         h = HTMLParser.HTMLParser()
         entry = h.unescape(entry)
         
         language = Fabric.__parse_language(entry)
-        #language=language.decode('utf-8')
-        #print language, 'język polski', u'język polski'==language, language in Fabric.mapa, u'język polski' in Fabric.mapa
+        # language=language.decode('utf-8')
+        # print language, 'język polski', u'język polski'==language, language in Fabric.mapa, u'język polski' in Fabric.mapa
         
         if language in Fabric.mapa:
             return Fabric.mapa[language](entry)
@@ -518,7 +565,7 @@ class Page:
         """
         self.title = title = self.__parse_title(content)
         
-        if re.search('^[ 0-9]+$', title) is not None or title.startswith(('Słownik ', 'Wikipedysta:', 'Dyskusja wikipedysty:', 'Szablon:', 'Dyskusja:', 'Indeks:', 'Kategoria:', 'Pomoc:', 'MediaWiki:', 'Aneks:', 'Dyskusja MediaWiki:', 'Dyskusja aneksu:', 'Dyskusja indeksu:', 'Dyskusja szablonu:', 'Dyskusja kategorii:', 'Wikisłownik:', 'Wikidyskusja:', 'Portal:', 'Plik:', 'Dyskusja portalu:', 'Dyskusja użytkownika', 'Dyskusja pomocy','Module:')):
+        if re.search('^[ 0-9]+$', title) is not None or title.startswith(('Słownik ', 'Wikipedysta:', 'Dyskusja wikipedysty:', 'Szablon:', 'Dyskusja:', 'Indeks:', 'Kategoria:', 'Pomoc:', 'MediaWiki:', 'Aneks:', 'Dyskusja MediaWiki:', 'Dyskusja aneksu:', 'Dyskusja indeksu:', 'Dyskusja szablonu:', 'Dyskusja kategorii:', 'Wikisłownik:', 'Wikidyskusja:', 'Portal:', 'Plik:', 'Dyskusja portalu:', 'Dyskusja użytkownika', 'Dyskusja pomocy', 'Module:')):
             raise ValueError("not an entry")
         
         m = re.search('<text xml:space="preserve">(.*?)</text>', content, re.S) 
@@ -542,7 +589,7 @@ class Page:
         self.entries = []
         for entry in entries:
             try:
-                #e = Entry(entry)
+                # e = Entry(entry)
                 e = Fabric.get_entry(entry)
             except ValueError as err:
                 continue
@@ -675,8 +722,8 @@ if __name__ == '__main__':
                               u'język portugalski':u'portuguese', u'portugalski':u'portuguese', u'język norweski (bokmål)':u'norwegian', u'norweski (bokmål)':u'norwegian'
                               , u'język litewski':u'lithuanian', u'język łotewski':u'latvian', u'język estoński':u'estonian',
                               u'litewski':u'lithuanian', u'łotewski':u'latvian', u'estoński':u'estonian', u'chorwacki':u'croatian', u'język chorwacki':u'croatian',
-                              u'gruziński':u'georgian', u'język gruziński':u'georgian', u'kataloński':u'catalan', u'język kataloński':u'catalan', u'japoński':u'japanese', 
-                              u'język japoński':u'japanese', u'koreański':u'korean', u'język koreański':u'korean', u'węgierski':u'hungarian', u'język węgierski':u'hungarian'}
+                              u'gruziński':u'georgian', u'język gruziński':u'georgian', u'kataloński':u'catalan', u'język kataloński':u'catalan', u'japoński':u'japanese',
+                              u'język japoński':u'japanese', u'koreański':u'korean', u'język koreański':u'korean', u'węgierski':u'hungarian', u'język węgierski':u'hungarian',u'język chiński standardowy':'chinese', u'chiński':'chinese'}
     dire = 'dictionaries/'
     locale.setlocale(locale.LC_ALL, "")
     
@@ -702,7 +749,7 @@ if __name__ == '__main__':
         for e in w:
             if e.language == u'język polski':
                 for l, t in e.translations:
-                    #polish_to[l].append('%s - %s' % (e.word, ' | '.join(t)))
+                    # polish_to[l].append('%s - %s' % (e.word, ' | '.join(t)))
                     polish_to[l][e.word] = t
                     
                 if hasattr(e, 'zobtlum'):
@@ -718,37 +765,39 @@ if __name__ == '__main__':
                     if u'nijaki' in e.gender:
                         gender += 'n'
                               
-                    #to_polish[e.language].append('%s%s - %s' % (e.word, gender, ' | '.join(unique(e.meanings))))
-                    to_polish[e.language][e.word+gender] = unique(e.meanings)
+                    # to_polish[e.language].append('%s%s - %s' % (e.word, gender, ' | '.join(unique(e.meanings))))
+                    to_polish[e.language][e.word + gender] = unique(e.meanings)
                 else:
-                    #to_polish[e.language].append('%s - %s' % (e.word, ' | '.join(unique(e.meanings))))
+                    # to_polish[e.language].append('%s - %s' % (e.word, ' | '.join(unique(e.meanings))))
                     to_polish[e.language][e.word] = unique(e.meanings)
 
     import cPickle
     f = open('to_polish.pkl', 'w')
-    cPickle.dump(to_polish, f, protocol=-1)
+    cPickle.dump(to_polish, f, protocol= -1)
     f = open('polish_to.pkl', 'w')
-    cPickle.dump(polish_to, f, protocol=-1)
+    cPickle.dump(polish_to, f, protocol= -1)
     f = open('zobtlum.pkl', 'w')
-    cPickle.dump(zobtlum, f, protocol=-1)
+    cPickle.dump(zobtlum, f, protocol= -1)
 
     for k in to_polish.keys():
         if k not in WIKI_LANGUAGES_ENGLISH:
             continue 
         f = open(dire + WIKI_LANGUAGES_ENGLISH[k] + '_polish.txt', 'w')
         for s in sorted(to_polish[k], cmp=locale.strcoll):
-            f.write('%s - %s\n' % (s, ' | '.join(unique(to_polish[k][s]))))
+            slowa = map(lambda x: x.strip('/: '), unique(to_polish[k][s]))
+            if not slowa: continue
+            f.write('%s - %s\n' % (s, ' | '.join(slowa)))
         f.close()
         
     print 'Polish to: '
     
-    for k,v in zobtlum.iteritems():
+    for k, v in zobtlum.iteritems():
         print k, v
         for k2, v2 in polish_to.iteritems():
             for zob in v:
                 if zob in v2:
                     if k not in v2:
-                        v2[k]=[]
+                        v2[k] = []
                     v2[k].extend(v2[zob])
     
     for k in polish_to.keys():
@@ -760,5 +809,12 @@ if __name__ == '__main__':
             continue 
         f = open(dire + 'polish_' + WIKI_LANGUAGES_ENGLISH[k] + '.txt', 'w')
         for s in sorted(polish_to[k], cmp=locale.strcoll):
-            f.write('%s - %s\n' % (s, ' | '.join(unique(polish_to[k][s]))))
+            slowa = map(lambda x: x.strip('/: '), unique(polish_to[k][s]))
+            if not slowa: continue
+            f.write('%s - %s\n' % (s, ' | '.join(slowa)))
         f.close()
+
+    f = open('to_polish2.pkl', 'w')
+    cPickle.dump(to_polish, f, protocol= -1)
+    f = open('polish_to2.pkl', 'w')
+    cPickle.dump(polish_to, f, protocol= -1)
